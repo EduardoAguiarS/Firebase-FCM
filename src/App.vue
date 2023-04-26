@@ -20,10 +20,11 @@ const app = initializeApp(firebaseConfig);
 // Messaging
 const messaging = getMessaging(app);
 onMessage(messaging, (payload) => {
-  const notificationTitle = payload.notification.title;
+  console.log('Message received. ', payload);
+  const notificationTitle = payload.data.title;
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: payload.notification.icon,
+    body: payload.data.body,
+    icon: payload.data.icon,
   };
 
   // Show a notification
@@ -42,6 +43,7 @@ getToken(messaging, { vapidKey: publicVapidKey })
   }).catch((err) => {
     console.log('An error occurred while retrieving token. ', err);
   });
+
 </script>
 
 <template>
