@@ -33,7 +33,9 @@ onMessage(messaging, (payload) => {
 
 const publicVapidKey = "BDBTe05KkWqb5YST2u2Ghpt2s-ZOa-I6xEnOWDXSh0A1exqgxbd5--XNSCwNCnRBs3SsnNcxwc-HTk4ys-VH01I"
 
-getToken(messaging, { vapidKey: publicVapidKey })
+navigator.serviceWorker.register('/firebase-messaging-sw.js')
+.then((registration) => {
+  getToken(messaging, { registration, vapidKey: publicVapidKey })
   .then((currentToken) => {
     if (currentToken) {
       console.log("Your token is:", currentToken)
@@ -43,6 +45,9 @@ getToken(messaging, { vapidKey: publicVapidKey })
   }).catch((err) => {
     console.log('An error occurred while retrieving token. ', err);
   });
+}).catch((err) => {
+  console.log('Service worker registration failed, error:', err);
+});
 
 </script>
 
