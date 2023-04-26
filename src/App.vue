@@ -4,6 +4,7 @@ import HelloWorld from './components/HelloWorld.vue'
 // Firebase App
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { ref } from 'vue'
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnjq0dPsCFNBDWyAcdAXY27A-wzVYsom4",
@@ -13,6 +14,8 @@ const firebaseConfig = {
   messagingSenderId: "1064688451347",
   appId: "1:1064688451347:web:82dffb14aa2edb538a24e6"
 };
+
+const token = ref(null);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -38,7 +41,7 @@ navigator.serviceWorker.register('/firebase-messaging-sw.js')
   getToken(messaging, { registration, vapidKey: publicVapidKey })
   .then((currentToken) => {
     if (currentToken) {
-      console.log("Your token is:", currentToken)
+      token.value = currentToken
     } else {
       console.log('No registration token available. Request permission to generate one.');
     }
@@ -49,6 +52,24 @@ navigator.serviceWorker.register('/firebase-messaging-sw.js')
   console.log('Service worker registration failed, error:', err);
 });
 
+function permission() {
+  Notification.requestPermission().then((permission) => {
+    if (permission === 'granted') {
+      getToken(messaging, { vapidKey: publicVapidKey })
+        .then((currentToken) => {
+          if (currentToken) {
+            token.value = currentToken
+          } else {
+            console.log('No registration token available. Request permission to generate one.');
+          }
+        }).catch((err) => {
+          console.log('An error occurred while retrieving token. ', err);
+        });
+    } else {
+      console.log('Unable to get permission to notify.');
+    }
+  });
+}
 </script>
 
 <template>
@@ -59,6 +80,10 @@ navigator.serviceWorker.register('/firebase-messaging-sw.js')
     <a href="https://vuejs.org/" target="_blank">
       <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
+  </div>
+  <div>
+    <button v-on:click="permission">notification</button>
+    <p>{{ token }}</p>
   </div>
   <HelloWorld msg="Vite + Vue" />
 </template>
