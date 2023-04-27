@@ -3,7 +3,7 @@ import HelloWorld from './components/HelloWorld.vue'
 
 // Firebase App
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, deleteToken} from "firebase/messaging";
 import { ref } from 'vue'
 
 const firebaseConfig = {
@@ -16,6 +16,8 @@ const firebaseConfig = {
 };
 
 const token = ref(null);
+const register = ref(null);
+const buttonValue = ref('notification')
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -23,7 +25,6 @@ const app = initializeApp(firebaseConfig);
 // Messaging
 const messaging = getMessaging(app);
 onMessage(messaging, (payload) => {
-  console.log('Message received. ', payload);
   const notificationTitle = payload.data.title;
   const notificationOptions = {
     body: payload.data.body,
@@ -38,37 +39,54 @@ const publicVapidKey = "BDBTe05KkWqb5YST2u2Ghpt2s-ZOa-I6xEnOWDXSh0A1exqgxbd5--XN
 
 navigator.serviceWorker.register('/firebase-messaging-sw.js')
 .then((registration) => {
-  getToken(messaging, { registration, vapidKey: publicVapidKey })
-  .then((currentToken) => {
-    if (currentToken) {
-      token.value = currentToken
-    } else {
-      console.log('No registration token available. Request permission to generate one.');
-    }
-  }).catch((err) => {
-    console.log('An error occurred while retrieving token. ', err);
-  });
+  register.value = registration
 }).catch((err) => {
-  console.log('Service worker registration failed, error:', err);
+  console.log('Service Worker registration failed: ', err);
 });
 
+const reg = register.value
+
+if (window.localStorage.getItem('control') === null) {
+  window.localStorage.setItem('control', true);
+} else {
+  if (window.localStorage.getItem('control') === 'true') {
+    buttonValue.value = 'notification'
+  } else {
+    buttonValue.value = 'disable notification'
+  }
+}
+
 function permission() {
-  Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-      getToken(messaging, { vapidKey: publicVapidKey })
+  if (window.localStorage.getItem('control') === 'true') {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        getToken(messaging, { reg, vapidKey: publicVapidKey })
         .then((currentToken) => {
           if (currentToken) {
             token.value = currentToken
+            buttonValue.value = 'disable notification'
+            window.localStorage.setItem('control', false);
           } else {
             console.log('No registration token available. Request permission to generate one.');
           }
         }).catch((err) => {
           console.log('An error occurred while retrieving token. ', err);
         });
-    } else {
-      console.log('Unable to get permission to notify.');
-    }
-  });
+      } else {
+        console.log('Unable to get permission to notify.');
+      }
+    });
+  } else {
+    deleteToken(messaging, token.value)
+    .then(() => {
+      console.log('Token deleted.');
+      token.value = null
+      buttonValue.value = 'notification'
+      window.localStorage.setItem('control', true);
+    }).catch((err) => {
+      console.log('Unable to delete token. ', err);
+    });
+  }
 }
 </script>
 
@@ -82,7 +100,7 @@ function permission() {
     </a>
   </div>
   <div>
-    <button v-on:click="permission">notification</button>
+    <button v-on:click="permission">{{ buttonValue }}</button>
     <p>{{ token }}</p>
   </div>
   <HelloWorld msg="Vite + Vue" />
