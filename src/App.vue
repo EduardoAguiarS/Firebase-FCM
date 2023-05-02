@@ -1,10 +1,10 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
+import { ref } from 'vue'
 
 // Firebase App
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, deleteToken} from "firebase/messaging";
-import { ref } from 'vue'
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnjq0dPsCFNBDWyAcdAXY27A-wzVYsom4",
@@ -14,10 +14,6 @@ const firebaseConfig = {
   messagingSenderId: "1064688451347",
   appId: "1:1064688451347:web:82dffb14aa2edb538a24e6"
 };
-
-const token = ref(null);
-const register = ref(null);
-const buttonValue = ref('notification')
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -35,6 +31,10 @@ onMessage(messaging, (payload) => {
   new Notification(notificationTitle, notificationOptions);
 });
 
+const token = ref(null);
+const register = ref(null);
+const buttonValue = ref('Enable Notification')
+
 const publicVapidKey = "BDBTe05KkWqb5YST2u2Ghpt2s-ZOa-I6xEnOWDXSh0A1exqgxbd5--XNSCwNCnRBs3SsnNcxwc-HTk4ys-VH01I"
 
 navigator.serviceWorker.register('/firebase-messaging-sw.js')
@@ -50,9 +50,9 @@ if (window.localStorage.getItem('control') === null) {
   window.localStorage.setItem('control', true);
 } else {
   if (window.localStorage.getItem('control') === 'true') {
-    buttonValue.value = 'notification'
+    buttonValue.value = 'Enable Notification'
   } else {
-    buttonValue.value = 'disable notification'
+    buttonValue.value = 'Disable Notification'
   }
 }
 
@@ -64,7 +64,7 @@ function permission() {
         .then((currentToken) => {
           if (currentToken) {
             token.value = currentToken
-            buttonValue.value = 'disable notification'
+            buttonValue.value = 'Disable Notification'
             window.localStorage.setItem('control', false);
           } else {
             console.log('No registration token available. Request permission to generate one.');
@@ -81,7 +81,7 @@ function permission() {
     .then(() => {
       console.log('Token deleted.');
       token.value = null
-      buttonValue.value = 'notification'
+      buttonValue.value = 'Enable Notification'
       window.localStorage.setItem('control', true);
     }).catch((err) => {
       console.log('Unable to delete token. ', err);
